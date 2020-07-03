@@ -1,0 +1,108 @@
+import psycopg2
+import math
+from pprint import pprint
+from sshtunnel import SSHTunnelForwarder
+
+count = """select count(*)
+from exames ex
+         join procedimentos pr using (cd_procedimento)
+         join modalidades mo using (cd_modalidade)
+         left join medicos ms using (cd_medico)
+         join planos pl using (cd_plano)
+         join fornecedores fo on pl.cd_fornecedor = fo.cd_fornecedor"""
+select = """select ex.cd_atendimento,
+                   ex.cd_exame,
+                   fo.ds_fornecedor as ds_convenio,
+                   case pr.cd_modalidade
+                       when 6 then 4 -- ULTRASSONOGRAFIA
+                       when 7 then 5 -- ELETRONEUROMIOGRAFIA
+                       when 8 then 1 -- TOMOGRAFIA
+                       when 9 then 2 -- RESSONANCIA
+                       when 10 then 3 -- RAIO-X
+                   end as cd_modalidade,
+                   pr.ds_procedimento,
+                   ms.ds_medico as ds_solicitante,
+                   ms.ds_crm_nr || '-' || ms.ds_crm_uf as ds_crm_solicitante,
+                   ex.nr_vl_co,
+                   ex.nr_vl_hm,
+                   ex.nr_vl_mf,
+                   ex.nr_vl_ct,
+                   ex.nr_vl_md,
+                   ex.nr_vl_particular,
+                   ex.nr_vl_convenio
+             from exames ex
+                join procedimentos pr using (cd_procedimento)
+                join modalidades mo using (cd_modalidade)
+                left join medicos ms using (cd_medico)
+                join planos pl using (cd_plano)
+                join fornecedores fo on pl.cd_fornecedor = fo.cd_fornecedor
+                limit 500 
+                offset (%s)"""
+
+try:
+
+    with SSHTunnelForwarder(
+            ('186.251.74.20', 22),
+            # ssh_private_key="</path/to/private/ssh/key>",
+            # in my case, I used a password instead of a private key
+            ssh_username="dicomvix",
+            ssh_password="system98",
+            remote_bind_address=('localhost', 5432),
+            local_bind_address=('localhost', 5422)) as server:
+
+        server.start()
+        print("server connected")
+
+        cdm = {
+            'database': 'clinux_caldas_novas',
+            'user': 'dicomvix',
+            'password': 'system98',
+            'host': 'localhost',
+            'port': 5422
+        }
+
+        dw = {
+            'database': 'dw',
+            'user': 'crd',
+            'password': 'system98',
+            'host': 'localhost',
+            'port': 5432
+        }
+
+        try:
+            conn = psycopg2.connect(**cdm)
+            curscdm = conn.cursor()
+            conn2 = psycopg2.connect(**dw)
+            print("database connected cdm")
+            print("ETL EXAMES CDM")
+            curscdm.execute(count)
+            offset = curscdm.fetchone()
+            offset = offset[0]
+            pprint(offset)
+            curscdm.close()
+            i = 0
+            while (i <= offset):
+                curscdm = conn.cursor()
+                range = str(i)
+                pos = (i/offset)*100
+                print("{:.0f} / 100".format(pos))
+                curscdm.execute(select, (range,))
+                exames = curscdm.fetchall()
+                curscdm.close()
+                try:
+                    cursdw = conn2.cursor()
+                    args_str = b','.join(cursdw.mogrify("(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)", exame) for exame in exames).decode()
+                    cursdw.execute("INSERT INTO exames (cd_atendimento, cd_exame,ds_convenio, cd_modalidade, ds_procedimento, ds_solicitante, ds_crm_solicitante, nr_vl_co, nr_vl_hm, nr_vl_mf, nr_vl_ct, nr_vl_md, nr_vl_particular, nr_vl_convenio) VALUES " +
+                                   args_str + "ON CONFLICT (cd_atendimento,cd_exame) DO NOTHING")
+                    conn2.commit()
+                    cursdw.close()
+                except Exception as e:
+                    print(e)
+                i = i+500
+            conn2.close()
+            conn.close()
+            server.close()
+        except Exception as e:
+            pprint(e)
+except:
+    print("Connection Failed")
