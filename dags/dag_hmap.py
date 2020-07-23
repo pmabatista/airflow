@@ -14,29 +14,29 @@ default_args = {
 }
 # Nomeando a DAG e definindo quando ela vai ser executada (você pode usar argumentos em Crontab também caso queira que a DAG execute por exemplo todos os dias as 8 da manhã)
 with DAG(
-    'dag_hsb',
+    'dag_hmap',
     catchup=False,
-    schedule_interval= '0 1,13 * * *',
+    schedule_interval= '0 4,16 * * *',
     default_args=default_args
 ) as dag:
     # Definindo as tarefas que a DAG vai executar, nesse caso a execução de dois programas Python, chamando sua execução por comandos bash
     t1 = BashOperator(
-        task_id='etl_atendimentos_hsb',
+        task_id='etl_atendimentos_hmap',
         bash_command="""
-        cd $AIRFLOW_HOME/dags/etl_scripts/hsb/
-        python3 etl_atendimentos_hsb.py
+        cd $AIRFLOW_HOME/dags/etl_scripts/hmap/
+        python3 etl_atendimentos_hmap.py
     """)
     t2 = BashOperator(
-        task_id='etl_exames_hsb',
+        task_id='etl_exames_hmap',
         bash_command="""
-        cd $AIRFLOW_HOME/dags/etl_scripts/hsb/
-        python3 etl_exames_hsb.py
+        cd $AIRFLOW_HOME/dags/etl_scripts/hmap/
+        python3 etl_exames_hmap.py
     """)
     t3 = BashOperator(
-        task_id='etl_pacientes_hsb',
+        task_id='etl_pacientes_hmap',
         bash_command="""
-        cd $AIRFLOW_HOME/dags/etl_scripts/hsb/
-        python3 etl_pacientes_hsb.py
+        cd $AIRFLOW_HOME/dags/etl_scripts/hmap/
+        python3 etl_pacientes_hmap.py
     """)
     
 # Definindo o padrão de execução, nesse caso executamos t1 e depois t2
