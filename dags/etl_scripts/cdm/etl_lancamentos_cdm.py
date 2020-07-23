@@ -4,11 +4,40 @@ from pprint import pprint
 from sshtunnel import SSHTunnelForwarder
 
 count = """select count(*)
- from forneced"""
-select = """select cd_fornecedor, ds_fornecedor 
-            from fornecedores where nr_fornecedor = 0
-            limit 500 
-            offset (%s)"""
+ FROM lancamentos la
+       JOIN pagamentos    pa USING(cd_lancamento)
+       JOIN fornecedores  fo USING(cd_fornecedor)
+       JOIN contas        co USING(cd_conta)
+       JOIN contas_grupos cg USING(cd_grupo)
+       JOIN empresas em using(cd_empresa)
+       LEFT JOIN lancamentos_formas lf using (cd_forma)
+       LEFT JOIN contas_fluxos cf using (cd_fluxo)"""
+select = """SELECT
+      pa.cd_pagamento,
+      pa.cd_lancamento,
+      pa.dt_lancamento,
+      pa.dt_realizacao,
+      case when cg.sn_despesa is true
+      then -1 * pa.nr_realizado
+      else pa.nr_realizado
+      end  as nr_realizado,
+      cg.ds_grupo,
+      fo.ds_fornecedor,
+      lf.ds_forma,
+      em.ds_empresa,
+      co.ds_conta
+      FROM lancamentos la
+      JOIN pagamentos    pa USING(cd_lancamento)
+      JOIN fornecedores  fo USING(cd_fornecedor)
+      JOIN contas        co USING(cd_conta)
+      JOIN contas_grupos cg USING(cd_grupo)
+      JOIN empresas em using(cd_empresa)
+      LEFT JOIN lancamentos_formas lf using (cd_forma)
+      LEFT JOIN contas_fluxos cf using (cd_fluxo)
+      ORDER BY cd_lancamento
+      limit 500
+      offset (%s)"""
+
 
 try:
 
@@ -45,7 +74,7 @@ try:
             curscdm = conn.cursor()
             conn2 = psycopg2.connect(**dw)
             print("database connected cdm")
-            print("ETL PACIENTES CDM")
+            print("ETL LANCAMENTOS CDM")
             curscdm.execute(count)
             offset = curscdm.fetchone()
             offset = offset[0]
@@ -57,14 +86,14 @@ try:
                 range = str(i)
                 pos = (i/offset)*100
                 curscdm.execute(select, (range,))
-                pacientes = curscdm.fetchall()
+                lancamentos = curscdm.fetchall()
                 print("{:.0f} / 100".format(pos))
                 curscdm.close()
                 try:
                     cursdw = conn2.cursor()
-                    args_str = b','.join(cursdw.mogrify("(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)", paciente) for paciente in pacientes).decode()
-                    cursdw.execute("INSERT INTO pacientes (cd_paciente, ds_paciente, dt_nascimento, ds_cpf, ds_sexo, ds_civil, nr_peso, nr_altura, ds_cidade, ds_estado, ds_profissao) VALUES " +
-                                   args_str + "ON CONFLICT (cd_paciente) DO NOTHING")
+                    args_str = b','.join(cursdw.mogrify("(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)", lancamento) for lancamento in lancamentos).decode()
+                    cursdw.execute("INSERT INTO lancamentos (cd_pagamento, cd_lancamento, dt_lancamento, dt_realizacao, nr_realizado, ds_grupo, ds_fornecedor, ds_forma, ds_empresa,ds_conta) VALUES " +
+                                   args_str + "ON CONFLICT (cd_lancamento,cd_pagamento) DO UPDATE SET ds_conta=excluded.ds_conta, nr_realizado = excluded.nr_realizado")
                     conn2.commit()
                     cursdw.close()
                 except Exception as e:

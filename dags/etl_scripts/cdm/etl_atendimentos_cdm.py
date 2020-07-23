@@ -17,7 +17,7 @@ select = """select ae.cd_atendimento,
        	ae.dt_hora,
 	ae.nr_controle,
 	to_char(ae.dt_agendamento, 'YYYY-MM-DD HH:mm:ss') as dt_agendamento,
-	em.ds_empresa,
+	'1'::integer AS cd_empresa,
 	me.ds_medico as ds_executante,
 	aa.ds_aviso,
        ae.dt_hora_sala01                           as hr_entrada_sala,
@@ -44,7 +44,6 @@ END as ds_status,
 ae.cd_paciente
 from atendimentos ae
 join salas sa using(cd_sala)
-join empresas em using(cd_empresa)
 join medicos me using(cd_medico)
 left join medicos mr on (mr.cd_medico = ae.cd_revisor)
 join pacientes pa using(cd_paciente)
@@ -87,6 +86,7 @@ try:
             curscdm = conn.cursor()
             conn2 = psycopg2.connect(**dw)
             print("database connected cdm")
+            print("ETL ATENDIMENTOS CDM")
             curscdm.execute(count)
             offset = curscdm.fetchone()
             offset = offset[0]
@@ -104,8 +104,8 @@ try:
                 try:
                     cursdw = conn2.cursor()
                     args_str = b','.join(cursdw.mogrify("(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)", atendimento) for atendimento in atendimentos).decode()
-                    cursdw.execute("INSERT INTO atendimentos (cd_atendimento,dt_data,dt_hora,nr_controle,dt_agendamento,ds_empresa,ds_executante,ds_aviso,hr_entrada_sala,hr_saida_sala,ds_status,cd_paciente) VALUES " +
-                                   args_str + "ON CONFLICT (cd_atendimento,ds_empresa) DO UPDATE set cd_paciente = excluded.cd_paciente")
+                    cursdw.execute("INSERT INTO atendimentos (cd_atendimento,dt_data,dt_hora,nr_controle,dt_agendamento,cd_empresa,ds_executante,ds_aviso,hr_entrada_sala,hr_saida_sala,ds_status,cd_paciente) VALUES " +
+                                   args_str + "ON CONFLICT (cd_atendimento,cd_empresa) DO UPDATE set cd_paciente = excluded.cd_paciente")
                     conn2.commit()
                     cursdw.close()
                 except Exception as e:

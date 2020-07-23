@@ -14,11 +14,10 @@ select = """select ex.cd_atendimento,
                    ex.cd_exame,
                    fo.ds_fornecedor as ds_convenio,
                    case pr.cd_modalidade
-                       when 6 then 4 -- ULTRASSONOGRAFIA
-                       when 7 then 5 -- ELETRONEUROMIOGRAFIA
-                       when 8 then 1 -- TOMOGRAFIA
-                       when 9 then 2 -- RESSONANCIA
-                       when 10 then 3 -- RAIO-X
+                       when 5 then 4 -- ULTRASSONOGRAFIA
+                       when 4 then 1 -- TOMOGRAFIA
+                       when 6 then 6 -- CARDIOLOGIA
+                       when 3 then 3 -- RAIO-X
                    end as cd_modalidade,
                    pr.ds_procedimento,
                    ms.ds_medico as ds_solicitante,
@@ -29,7 +28,8 @@ select = """select ex.cd_atendimento,
                    ex.nr_vl_ct,
                    ex.nr_vl_md,
                    ex.nr_vl_particular,
-                   ex.nr_vl_convenio
+                   ex.nr_vl_convenio,
+                   '2'::integer AS cd_empresa
              from exames ex
                 join procedimentos pr using (cd_procedimento)
                 join modalidades mo using (cd_modalidade)
@@ -42,23 +42,23 @@ select = """select ex.cd_atendimento,
 try:
 
     with SSHTunnelForwarder(
-            ('186.251.74.20', 22),
+            ('189.112.139.121', 1157),
             # ssh_private_key="</path/to/private/ssh/key>",
             # in my case, I used a password instead of a private key
             ssh_username="dicomvix",
             ssh_password="system98",
             remote_bind_address=('localhost', 5432),
-            local_bind_address=('localhost', 5422)) as server:
+            local_bind_address=('localhost', 5423)) as server:
 
         server.start()
         print("server connected")
 
         cdm = {
-            'database': 'clinux_caldas_novas',
+            'database': 'clinux_santa_barbara',
             'user': 'dicomvix',
             'password': 'system98',
             'host': 'localhost',
-            'port': 5422
+            'port': 5423
         }
 
         dw = {
@@ -73,8 +73,8 @@ try:
             conn = psycopg2.connect(**cdm)
             curscdm = conn.cursor()
             conn2 = psycopg2.connect(**dw)
-            print("database connected cdm")
-            print("ETL EXAMES CDM")
+            print("database connected hsb")
+            print("ETL EXAMES HSB")
             curscdm.execute(count)
             offset = curscdm.fetchone()
             offset = offset[0]
@@ -91,9 +91,9 @@ try:
                 curscdm.close()
                 try:
                     cursdw = conn2.cursor()
-                    args_str = b','.join(cursdw.mogrify("(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)", exame) for exame in exames).decode()
-                    cursdw.execute("INSERT INTO exames (cd_atendimento, cd_exame,ds_convenio, cd_modalidade, ds_procedimento, ds_solicitante, ds_crm_solicitante, nr_vl_co, nr_vl_hm, nr_vl_mf, nr_vl_ct, nr_vl_md, nr_vl_particular, nr_vl_convenio) VALUES " +
-                                   args_str + "ON CONFLICT (cd_atendimento,cd_exame) DO NOTHING")
+                    args_str = b','.join(cursdw.mogrify("(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)", exame) for exame in exames).decode()
+                    cursdw.execute("INSERT INTO exames (cd_atendimento, cd_exame,ds_convenio, cd_modalidade, ds_procedimento, ds_solicitante, ds_crm_solicitante, nr_vl_co, nr_vl_hm, nr_vl_mf, nr_vl_ct, nr_vl_md, nr_vl_particular, nr_vl_convenio,cd_empresa) VALUES " +
+                                   args_str + "ON CONFLICT (cd_exame,cd_empresa) DO UPDATE SET ds_convenio=excluded.ds_convenio, cd_modalidade=excluded.cd_modalidade, ds_procedimento=excluded.ds_procedimento, ds_solicitante=excluded.ds_solicitante, ds_crm_solicitante=excluded.ds_crm_solicitante, nr_vl_convenio=excluded.nr_vl_convenio, nr_vl_particular=excluded.nr_vl_particular ")
                     conn2.commit()
                     cursdw.close()
                 except Exception as e:

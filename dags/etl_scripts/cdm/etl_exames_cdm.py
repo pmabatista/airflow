@@ -29,7 +29,8 @@ select = """select ex.cd_atendimento,
                    ex.nr_vl_ct,
                    ex.nr_vl_md,
                    ex.nr_vl_particular,
-                   ex.nr_vl_convenio
+                   ex.nr_vl_convenio,
+                   '1'::integer AS cd_empresa
              from exames ex
                 join procedimentos pr using (cd_procedimento)
                 join modalidades mo using (cd_modalidade)
@@ -91,9 +92,9 @@ try:
                 curscdm.close()
                 try:
                     cursdw = conn2.cursor()
-                    args_str = b','.join(cursdw.mogrify("(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)", exame) for exame in exames).decode()
-                    cursdw.execute("INSERT INTO exames (cd_atendimento, cd_exame,ds_convenio, cd_modalidade, ds_procedimento, ds_solicitante, ds_crm_solicitante, nr_vl_co, nr_vl_hm, nr_vl_mf, nr_vl_ct, nr_vl_md, nr_vl_particular, nr_vl_convenio) VALUES " +
-                                   args_str + "ON CONFLICT (cd_atendimento,cd_exame) DO UPDATE SET ds_convenio=excluded.ds_convenio, cd_modalidade=excluded.cd_modalidade, ds_procedimento=excluded.ds_procedimento, ds_solicitante=excluded.ds_solicitante, ds_crm_solicitante=excluded.ds_crm_solicitante, nr_vl_convenio=excluded.nr_vl_convenio, nr_vl_particular=excluded.nr_vl_particular ")
+                    args_str = b','.join(cursdw.mogrify("(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)", exame) for exame in exames).decode()
+                    cursdw.execute("INSERT INTO exames (cd_atendimento, cd_exame,ds_convenio, cd_modalidade, ds_procedimento, ds_solicitante, ds_crm_solicitante, nr_vl_co, nr_vl_hm, nr_vl_mf, nr_vl_ct, nr_vl_md, nr_vl_particular, nr_vl_convenio,cd_empresa) VALUES " +
+                                   args_str + "ON CONFLICT (cd_exame,cd_empresa) DO UPDATE SET ds_convenio=excluded.ds_convenio, cd_modalidade=excluded.cd_modalidade, ds_procedimento=excluded.ds_procedimento, ds_solicitante=excluded.ds_solicitante, ds_crm_solicitante=excluded.ds_crm_solicitante, nr_vl_convenio=excluded.nr_vl_convenio, nr_vl_particular=excluded.nr_vl_particular ")
                     conn2.commit()
                     cursdw.close()
                 except Exception as e:
