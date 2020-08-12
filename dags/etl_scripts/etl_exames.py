@@ -1,8 +1,17 @@
 import psycopg2
 import math
+import sys
 from pprint import pprint
 from sshtunnel import SSHTunnelForwarder
 
+param = sys.argv[1:]
+cd_empresa = param[0]
+ip_server = param[1]
+port_server = int(param[2])
+user_server = param[3]
+password_server = param[4]
+port_tunnel = int(param[5])
+db_name = param[6]
 
 count = """select count(*)
 from exames ex
@@ -15,10 +24,11 @@ select = """select ex.cd_atendimento,
                    ex.cd_exame,
                    fo.ds_fornecedor as ds_convenio,
                    case pr.cd_modalidade
-                       when 5 then 4 -- ULTRASSONOGRAFIA
-                       when 4 then 1 -- TOMOGRAFIA
-                       when 6 then 6 -- CARDIOLOGIA
-                       when 3 then 3 -- RAIO-X
+                       when 6 then 4 -- ULTRASSONOGRAFIA
+                       when 7 then 5 -- ELETRONEUROMIOGRAFIA
+                       when 8 then 1 -- TOMOGRAFIA
+                       when 9 then 2 -- RESSONANCIA
+                       when 10 then 3 -- RAIO-X
                    end as cd_modalidade,
                    pr.ds_procedimento,
                    ms.ds_medico as ds_solicitante,
@@ -30,7 +40,7 @@ select = """select ex.cd_atendimento,
                    ex.nr_vl_md,
                    ex.nr_vl_particular,
                    ex.nr_vl_convenio,
-                   '2'::integer AS cd_empresa
+                   (%s)::integer AS cd_empresa
              from exames ex
                 join procedimentos pr using (cd_procedimento)
                 join modalidades mo using (cd_modalidade)
@@ -40,56 +50,61 @@ select = """select ex.cd_atendimento,
                 limit 500 
                 offset (%s)"""
 
+delete = "delete from exames where cd_empresa = (%s)"
+
 try:
 
     with SSHTunnelForwarder(
-            ('186.251.74.20', 22),
+            (ip_server, port_server),
             # ssh_private_key="</path/to/private/ssh/key>",
             # in my case, I used a password instead of a private key
-            ssh_username="dicomvix",
-            ssh_password="system98",
+            ssh_username=user_server,
+            ssh_password=password_server,
             remote_bind_address=('localhost', 5432),
-            local_bind_address=('localhost', 5423)) as server:
+            local_bind_address=('localhost', port_tunnel)) as server:
 
         server.start()
         print("server connected")
 
-        cdm = {
-            'database': 'clinux_caldas_novas',
+        clinux = {
+            'database': db_name,
             'user': 'dicomvix',
             'password': 'system98',
             'host': 'localhost',
-            'port': 5422
+            'port': port_tunnel
         }
 
         dw = {
             'database': 'dw',
             'user': 'crd',
             'password': 'system98',
-            'host': '192.168.1.233',
+            'host': 'localhost',
             'port': 5432
         }
 
         try:
-            conn = psycopg2.connect(**cdm)
-            curscdm = conn.cursor()
+            conn = psycopg2.connect(**clinux)
+            cursclinux = conn.cursor()
             conn2 = psycopg2.connect(**dw)
-            print("database connected hsb")
-            print("ETL EXAMES HSB")
-            curscdm.execute(count)
-            offset = curscdm.fetchone()
+            print("database connected clinux")
+            print("ETL EXAMES CLINUX")
+            cursdw = conn2.cursor()
+            cursdw.execute(delete, cd_empresa)
+            cursdw.close()
+            cursclinux.execute(count)
+            offset = cursclinux.fetchone()
             offset = offset[0]
             pprint(offset)
-            curscdm.close()
+            cursclinux.close()
             i = 0
             while (i <= offset):
-                curscdm = conn.cursor()
+                cursclinux = conn.cursor()
                 range = str(i)
                 pos = (i / offset) * 100
                 print("{:.0f} / 100".format(pos))
-                curscdm.execute(select, (range,))
-                exames = curscdm.fetchall()
-                curscdm.close()
+                cursclinux.execute(select, [cd_empresa, (range,)])
+                exames = cursclinux.fetchall()
+                cursclinux.close()
                 try:
                     cursdw = conn2.cursor()
                     args_str = b','.join(
