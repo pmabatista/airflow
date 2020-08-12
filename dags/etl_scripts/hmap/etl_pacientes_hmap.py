@@ -24,7 +24,7 @@ select = """select cd_paciente,
                    ds_cidade,
                    ds_estado,
                    ds_profissao,
-                   '2'::integer AS cd_empresa
+                   '3'::integer AS cd_empresa
             from pacientes
             limit 500
             offset (%s)"""
@@ -37,7 +37,7 @@ try:
             ssh_username="dicomvix",
             ssh_password="Gtecbsb@2019",
             remote_bind_address=('localhost', 5432),
-            local_bind_address=('localhost', 5422)) as server:
+            local_bind_address=('localhost', 5424)) as server:
     
      server.start()
      print("server connected")
@@ -46,7 +46,7 @@ try:
         'user': 'dicomvix',
         'password': 'system98',
         'host': 'localhost',
-        'port': 5422
+        'port': 5424
           }
      dw = {
        'database': 'dw',

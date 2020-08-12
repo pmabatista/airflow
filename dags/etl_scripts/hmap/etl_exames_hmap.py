@@ -29,7 +29,7 @@ select = """select ex.cd_atendimento,
                    ex.nr_vl_md,
                    ex.nr_vl_particular,
                    ex.nr_vl_convenio,
-                   '2'::integer AS cd_empresa
+                   '3'::integer AS cd_empresa
              from exames ex
                 join procedimentos pr using (cd_procedimento)
                 join modalidades mo using (cd_modalidade)
@@ -48,7 +48,7 @@ try:
             ssh_username="dicomvix",
             ssh_password="Gtecbsb@2019",
             remote_bind_address=('localhost', 5432),
-            local_bind_address=('localhost', 5423)) as server:
+            local_bind_address=('localhost', 5424)) as server:
 
         server.start()
         print("server connected")
@@ -58,7 +58,7 @@ try:
             'user': 'dicomvix',
             'password': 'system98',
             'host': 'localhost',
-            'port': 5423
+            'port': 5424
         }
 
         dw = {

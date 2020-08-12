@@ -39,7 +39,9 @@ select = """select ex.cd_atendimento,
                 join fornecedores fo on pl.cd_fornecedor = fo.cd_fornecedor
                 limit 500 
                 offset (%s)"""
-
+                
+delete = "delete from exames where cd_empresa = 1"
+                
 try:
 
     with SSHTunnelForwarder(
@@ -76,6 +78,9 @@ try:
             conn2 = psycopg2.connect(**dw)
             print("database connected cdm")
             print("ETL EXAMES CDM")
+            cursdw = conn2.cursor()
+            cursdw.execute(delete)
+            cursdw.close()
             curscdm.execute(count)
             offset = curscdm.fetchone()
             offset = offset[0]

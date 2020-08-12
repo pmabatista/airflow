@@ -17,7 +17,7 @@ select = """select ae.cd_atendimento,
        	ae.dt_hora,
 	ae.nr_controle,
 	to_char(ae.dt_agendamento, 'YYYY-MM-DD HH:mm:ss') as dt_agendamento,
-	'2'::integer AS cd_empresa,
+	'3'::integer AS cd_empresa,
 	me.ds_medico as ds_executante,
 	aa.ds_aviso,
        ae.dt_hora_sala01                           as hr_entrada_sala,
@@ -60,7 +60,7 @@ try:
             ssh_username="dicomvix",
             ssh_password="Gtecbsb@2019",
             remote_bind_address=('localhost', 5432),
-            local_bind_address=('localhost', 5423)) as server:
+            local_bind_address=('localhost', 5424)) as server:
 
         server.start()
         print("server connected")
