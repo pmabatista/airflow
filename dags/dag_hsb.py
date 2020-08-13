@@ -36,7 +36,7 @@ with DAG(
         task_id='etl_pacientes_hsb',
         bash_command="""
         cd $AIRFLOW_HOME/dags/etl_scripts
-        python3 etl_pacientes.py 2 189.112.139.121 1157 dicomvix system98 5423 clinux_santa_barbara nao
+        python3 etl_pacientes.py 2 189.112.139.121 1157 dicomvix system98 5423 clinux_santa_barbara 2 nao
     """)
     
 # Definindo o padrão de execução, nesse caso executamos t1 e depois t2

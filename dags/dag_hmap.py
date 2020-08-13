@@ -36,7 +36,7 @@ with DAG(
         task_id='etl_pacientes_hmap',
         bash_command="""
         cd $AIRFLOW_HOME/dags/etl_scripts
-        python3 etl_pacientes.py 3 54.233.117.112 22 dicomvix Gtecbsb@2019 5424 clinux_hmap limpar
+        python3 etl_pacientes.py 3 54.233.117.112 22 dicomvix Gtecbsb@2019 5424 clinux_hmap 2 limpar
     """)
     
 # Definindo o padrão de execução, nesse caso executamos t1 e depois t2

@@ -15,7 +15,7 @@ db_name = param[6]
 empresa = param[7]
 clear = param[8]
 
-count = """select count(*)
+count = """select count(distinct pa.cd_paciente)
 from pacientes pa
          join atendimentos ae using (cd_paciente)
          join salas sa using (cd_sala)
@@ -47,7 +47,7 @@ from pacientes pa
          join empresas using (cd_empresa)
 where sa.cd_empresa = (%s)
 limit 500
-offset(%s)"""
+offset (%s)"""
 
 delete = "delete from pacientes where cd_empresa = (%s)"
 try:

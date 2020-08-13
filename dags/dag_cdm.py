@@ -36,7 +36,7 @@ with DAG(
         task_id='etl_pacientes_cdm',
         bash_command="""
         cd $AIRFLOW_HOME/dags/etl_scripts
-        python3 etl_pacientes.py 1 186.251.74.20 22 dicomvix system98 5422 clinux_caldas_novas limpar
+        python3 etl_pacientes.py 1 186.251.74.20 22 dicomvix system98 5422 clinux_caldas_novas 1 limpar
     """)
     t4 = BashOperator(
         task_id='etl_lancamentos_cdm',
