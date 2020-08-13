@@ -1,0 +1,15 @@
+*~
+*.out
+*.log
+*.err
+*.pid
+*.db
+
+
+### Python ###
+*.py[cod]
+*$py.class
+
+
+logs
+unittests.cfg

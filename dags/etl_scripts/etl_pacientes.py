@@ -12,6 +12,7 @@ user_server = param[3]
 password_server = param[4]
 port_tunnel = int(param[5])
 db_name = param[6]
+clear = param[7]
 
 count = """select count(*)
 from pacientes"""
@@ -74,8 +75,10 @@ try:
             print("database connected clinux")
             print("ETL EXAMES CLINUX")
             cursdw = conn2.cursor()
-            cursdw.execute(delete, cd_empresa)
-            cursdw.close()
+            if (clear == "limpar"):
+                cursdw.execute(delete, cd_empresa)
+                cursdw.close()
+                print("Tabela Limpa.")
             cursclinux.execute(count)
             offset = cursclinux.fetchone()
             offset = offset[0]

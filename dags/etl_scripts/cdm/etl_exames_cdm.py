@@ -49,7 +49,7 @@ try:
             ssh_username="dicomvix",
             ssh_password="system98",
             remote_bind_address=('localhost', 5432),
-            local_bind_address=('localhost', 5423)) as server:
+            local_bind_address=('localhost', 5422)) as server:
 
         server.start()
         print("server connected")
@@ -66,7 +66,7 @@ try:
             'database': 'dw',
             'user': 'crd',
             'password': 'system98',
-            'host': '192.168.1.233',
+            'host': 'localhost',
             'port': 5432
         }
 
@@ -74,8 +74,8 @@ try:
             conn = psycopg2.connect(**cdm)
             curscdm = conn.cursor()
             conn2 = psycopg2.connect(**dw)
-            print("database connected hsb")
-            print("ETL EXAMES HSB")
+            print("database connected cdm")
+            print("ETL EXAMES CDM")
             curscdm.execute(count)
             offset = curscdm.fetchone()
             offset = offset[0]

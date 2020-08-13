@@ -12,14 +12,20 @@ user_server = param[3]
 password_server = param[4]
 port_tunnel = int(param[5])
 db_name = param[6]
+empresa = param[7]
+clear = param[8]
 
 count = """select count(*)
 from exames ex
+         join atendimentos ae using(cd_atendimento)
+         join salas sa using(cd_sala)
+         join empresas em using (cd_empresa)
          join procedimentos pr using (cd_procedimento)
-         join modalidades mo using (cd_modalidade)
-         left join medicos ms using (cd_medico)
+         join modalidades mo on (mo.cd_modalidade = pr.cd_modalidade)
+         left join medicos ms on (ms.cd_medico = ex.cd_medico)
          join planos pl using (cd_plano)
-         join fornecedores fo on pl.cd_fornecedor = fo.cd_fornecedor"""
+         join fornecedores fo on pl.cd_fornecedor = fo.cd_fornecedor 
+         where em.cd_empresa = (%s)"""
 select = """select ex.cd_atendimento,
                    ex.cd_exame,
                    fo.ds_fornecedor as ds_convenio,
@@ -42,11 +48,15 @@ select = """select ex.cd_atendimento,
                    ex.nr_vl_convenio,
                    (%s)::integer AS cd_empresa
              from exames ex
+                join atendimentos ae using(cd_atendimento)
+                join salas sa using(cd_sala)
+                join empresas em using (cd_empresa)
                 join procedimentos pr using (cd_procedimento)
-                join modalidades mo using (cd_modalidade)
-                left join medicos ms using (cd_medico)
+                join modalidades mo on (mo.cd_modalidade = pr.cd_modalidade)
+                left join medicos ms on (ms.cd_medico = ex.cd_medico)
                 join planos pl using (cd_plano)
                 join fornecedores fo on pl.cd_fornecedor = fo.cd_fornecedor
+                where em.cd_empresa = (%s)
                 limit 500 
                 offset (%s)"""
 
@@ -89,9 +99,11 @@ try:
             print("database connected clinux")
             print("ETL EXAMES CLINUX")
             cursdw = conn2.cursor()
-            cursdw.execute(delete, cd_empresa)
-            cursdw.close()
-            cursclinux.execute(count)
+            if (clear == "limpar"):
+                cursdw.execute(delete, cd_empresa)
+                cursdw.close()
+                print("Tabela Limpa.")
+            cursclinux.execute(count,empresa)
             offset = cursclinux.fetchone()
             offset = offset[0]
             pprint(offset)
@@ -102,7 +114,7 @@ try:
                 range = str(i)
                 pos = (i / offset) * 100
                 print("{:.0f} / 100".format(pos))
-                cursclinux.execute(select, [cd_empresa, (range,)])
+                cursclinux.execute(select, [cd_empresa,empresa, (range,)])
                 exames = cursclinux.fetchall()
                 cursclinux.close()
                 try:

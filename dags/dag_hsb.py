@@ -23,20 +23,20 @@ with DAG(
     t1 = BashOperator(
         task_id='etl_atendimentos_hsb',
         bash_command="""
-        cd $AIRFLOW_HOME/dags/etl_scripts/hsb/
-        python3 etl_atendimentos_hsb.py
+        cd $AIRFLOW_HOME/dags/etl_scripts
+        python3 etl_atendimentos.py 2 189.112.139.121 1157 dicomvix system98 5423 clinux_santa_barbara 2 nao
     """)
     t2 = BashOperator(
         task_id='etl_exames_hsb',
         bash_command="""
-        cd $AIRFLOW_HOME/dags/etl_scripts/hsb/
-        python3 etl_exames_hsb.py
+        cd $AIRFLOW_HOME/dags/etl_scripts
+        python3 etl_exames.py 2 189.112.139.121 1157 dicomvix system98 5423 clinux_santa_barbara 2 nao
     """)
     t3 = BashOperator(
         task_id='etl_pacientes_hsb',
         bash_command="""
-        cd $AIRFLOW_HOME/dags/etl_scripts/hsb/
-        python3 etl_pacientes_hsb.py
+        cd $AIRFLOW_HOME/dags/etl_scripts
+        python3 etl_pacientes.py 2 189.112.139.121 1157 dicomvix system98 5423 clinux_santa_barbara nao
     """)
     
 # Definindo o padrão de execução, nesse caso executamos t1 e depois t2

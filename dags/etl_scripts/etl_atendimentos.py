@@ -12,6 +12,9 @@ user_server = param[3]
 password_server = param[4]
 port_tunnel = int(param[5])
 db_name = param[6]
+empresa = param[7]
+clear = param[8]
+
 
 count = """select count(*)
 from atendimentos ae
@@ -21,7 +24,7 @@ join medicos me using(cd_medico)
 left join medicos mr on (mr.cd_medico = ae.cd_revisor)
 join pacientes pa using(cd_paciente)
 left join atendimentos_avisos aa on (aa.cd_aviso = ae.nr_aviso)
-where ae.nr_controle is not null"""
+where ae.nr_controle is not null and em.cd_empresa = (%s)"""
 select = """select ae.cd_atendimento,
        ae.dt_data,
        	ae.dt_hora,
@@ -54,11 +57,12 @@ END as ds_status,
 ae.cd_paciente
 from atendimentos ae
 join salas sa using(cd_sala)
+join empresas em using (cd_empresa)
 join medicos me using(cd_medico)
 left join medicos mr on (mr.cd_medico = ae.cd_revisor)
 join pacientes pa using(cd_paciente)
 left join atendimentos_avisos aa on (aa.cd_aviso = ae.nr_aviso)
-where ae.nr_controle is not null limit 500 offset (%s)"""
+where ae.nr_controle is not null and em.cd_empresa = (%s) limit 500 offset (%s)"""
 
 delete = "delete from atendimentos where cd_empresa = (%s)"
 
@@ -99,9 +103,11 @@ try:
             print("database connected clinux")
             print("ETL EXAMES CLINUX")
             cursdw = conn2.cursor()
-            cursdw.execute(delete, cd_empresa)
-            cursdw.close()
-            cursclinux.execute(count)
+            if (clear == "limpar"):
+                cursdw.execute(delete, cd_empresa)
+                cursdw.close()
+                print("Tabela Limpa.")
+            cursclinux.execute(count, empresa)
             offset = cursclinux.fetchone()
             offset = offset[0]
             pprint(offset)
@@ -112,7 +118,7 @@ try:
                 range = str(i)
                 pos = (i / offset) * 100
                 print("{:.0f} / 100".format(pos))
-                cursclinux.execute(select, [cd_empresa, (range,)])
+                cursclinux.execute(select, [cd_empresa,empresa, (range,)])
                 atendimentos = cursclinux.fetchall()
                 cursclinux.close()
                 try:

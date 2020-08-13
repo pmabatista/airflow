@@ -42,7 +42,7 @@ try:
      server.start()
      print("server connected")
      cdm = {
-        'database': 'clinux_santa_barbara',
+        'database': 'clinux_backup',
         'user': 'dicomvix',
         'password': 'system98',
         'host': 'localhost',
