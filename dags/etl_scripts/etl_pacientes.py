@@ -12,33 +12,42 @@ user_server = param[3]
 password_server = param[4]
 port_tunnel = int(param[5])
 db_name = param[6]
-clear = param[7]
+empresa = param[7]
+clear = param[8]
 
 count = """select count(*)
-from pacientes"""
-select = """select cd_paciente,
-                   ds_paciente,
-                   dt_nascimento,
-                   ds_cpf,
-                   ds_sexo,
-                   case ds_civil
-                     when '1' then 'SOLTEIRO(A)'
-                     when '2' then 'CASADO(A)'
-                     when '3' then 'DIVORCIADO(A)'
-                     when '4' then 'DESQUITADO(A)'
-                     when '5' then 'SEPARADO(A)'
-                     when '6' then 'VIUVO(A)'
-                     when '7' then 'OUTRO(A)'
-                   else 'OUTRO(A)' end as ds_civil,
-                   nr_peso,
-                   nr_altura,
-                   ds_cidade,
-                   ds_estado,
-                   ds_profissao,
-                   (%s)::integer AS cd_empresa
-            from pacientes
-            limit 500
-            offset (%s)"""
+from pacientes pa
+         join atendimentos ae using (cd_paciente)
+         join salas sa using (cd_sala)
+         join empresas using (cd_empresa)
+where sa.cd_empresa = (%s)"""
+select = """select distinct pa.cd_paciente,
+                ds_paciente,
+                dt_nascimento,
+                ds_cpf,
+                ds_sexo,
+                case ds_civil
+                    when '1' then 'SOLTEIRO(A)'
+                    when '2' then 'CASADO(A)'
+                    when '3' then 'DIVORCIADO(A)'
+                    when '4' then 'DESQUITADO(A)'
+                    when '5' then 'SEPARADO(A)'
+                    when '6' then 'VIUVO(A)'
+                    when '7' then 'OUTRO(A)'
+                    else 'OUTRO(A)' end as ds_civil,
+                nr_peso,
+                nr_altura,
+                pa.ds_cidade,
+                pa.ds_estado,
+                ds_profissao,
+                (%s)::integer          AS cd_empresa
+from pacientes pa
+         join atendimentos ae using (cd_paciente)
+         join salas sa using (cd_sala)
+         join empresas using (cd_empresa)
+where sa.cd_empresa = (%s)
+limit 500
+offset(%s)"""
 
 delete = "delete from pacientes where cd_empresa = (%s)"
 try:
@@ -79,7 +88,7 @@ try:
                 cursdw.execute(delete, cd_empresa)
                 cursdw.close()
                 print("Tabela Limpa.")
-            cursclinux.execute(count)
+            cursclinux.execute(count,empresa)
             offset = cursclinux.fetchone()
             offset = offset[0]
             pprint(offset)
@@ -90,7 +99,7 @@ try:
                 range = str(i)
                 pos = (i / offset) * 100
                 print("{:.0f} / 100".format(pos))
-                cursclinux.execute(select, [cd_empresa, (range,)])
+                cursclinux.execute(select, [cd_empresa,empresa, (range,)])
                 pacientes = cursclinux.fetchall()
                 cursclinux.close()
                 try:
