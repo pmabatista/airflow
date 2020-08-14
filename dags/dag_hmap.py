@@ -24,19 +24,19 @@ with DAG(
         task_id='etl_atendimentos_hmap',
         bash_command="""
         cd $AIRFLOW_HOME/dags/etl_scripts
-        python3 etl_atendimentos.py 3 54.233.117.112 22 dicomvix Gtecbsb@2019 5424 clinux_hmap 2 limpar
+        python3 etl_atendimentos.py 3 54.233.117.112 22 localhost dicomvix Gtecbsb@2019 5424 clinux_hmap system98 2 limpar
     """)
     t2 = BashOperator(
         task_id='etl_exames_hmap',
         bash_command="""
         cd $AIRFLOW_HOME/dags/etl_scripts
-        python3 etl_exames.py 3 54.233.117.112 22 dicomvix Gtecbsb@2019 5424 clinux_hmap 2 limpar
+        python3 etl_exames.py 3 54.233.117.112 22 localhost dicomvix Gtecbsb@2019 5424 clinux_hmap system98 2 limpar
     """)
     t3 = BashOperator(
         task_id='etl_pacientes_hmap',
         bash_command="""
         cd $AIRFLOW_HOME/dags/etl_scripts
-        python3 etl_pacientes.py 3 54.233.117.112 22 dicomvix Gtecbsb@2019 5424 clinux_hmap 2 limpar
+        python3 etl_pacientes.py 3 54.233.117.112 22 localhost dicomvix Gtecbsb@2019 5424 clinux_hmap system98 2 limpar
     """)
     
 # Definindo o padrão de execução, nesse caso executamos t1 e depois t2

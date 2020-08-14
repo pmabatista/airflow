@@ -24,19 +24,19 @@ with DAG(
         task_id='etl_atendimentos_hci',
         bash_command="""
         cd $AIRFLOW_HOME/dags/etl_scripts
-        python3 etl_atendimentos.py 7 54.207.126.77 22 dicomvix Gtecbsb@2019 5425 clinux_hugo 6 limpar
+        python3 etl_atendimentos.py 7 54.207.126.77 22 localhost dicomvix Gtecbsb@2019 5425 clinux_hugo system98 6 limpar
     """)
     t2 = BashOperator(
         task_id='etl_exames_hci',
         bash_command="""
         cd $AIRFLOW_HOME/dags/etl_scripts
-        python3 etl_exames.py 7 54.207.126.77 22 dicomvix Gtecbsb@2019 5425 clinux_hugo 6 limpar
+        python3 etl_exames.py 7 54.207.126.77 22 localhost dicomvix Gtecbsb@2019 5425 clinux_hugo system98 6 limpar
     """)
     t3 = BashOperator(
         task_id='etl_pacientes_hci',
         bash_command="""
         cd $AIRFLOW_HOME/dags/etl_scripts
-        python3 etl_pacientes.py 7 54.207.126.77 22 dicomvix Gtecbsb@2019 5425 clinux_hugo 6 limpar
+        python3 etl_pacientes.py 7 54.207.126.77 22 localhost dicomvix Gtecbsb@2019 5425 clinux_hugo system98 6 limpar
         
     """)
     

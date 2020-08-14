@@ -14,29 +14,30 @@ default_args = {
 }
 # Nomeando a DAG e definindo quando ela vai ser executada (você pode usar argumentos em Crontab também caso queira que a DAG execute por exemplo todos os dias as 8 da manhã)
 with DAG(
-    'dag_hsb',
+    'dag_hrsm',
     catchup=False,
-    schedule_interval= '0 1,13 * * *',
+    schedule_interval= '15 1,13 * * *',
     default_args=default_args
 ) as dag:
     # Definindo as tarefas que a DAG vai executar, nesse caso a execução de dois programas Python, chamando sua execução por comandos bash
     t1 = BashOperator(
-        task_id='etl_atendimentos_hsb',
+        task_id='etl_atendimentos_hrsm',
         bash_command="""
         cd $AIRFLOW_HOME/dags/etl_scripts
-        python3 etl_atendimentos.py 2 189.112.139.121 1157 localhost dicomvix system98 5423 clinux_santa_barbara system98 2 nao
+        python3 etl_atendimentos.py 11 131.72.222.93 1157 10.233.95.19 dicomvix system98 5420 clinux_santa_maria system98 1 limpar
     """)
     t2 = BashOperator(
-        task_id='etl_exames_hsb',
+        task_id='etl_exames_hrsm',
         bash_command="""
         cd $AIRFLOW_HOME/dags/etl_scripts
-        python3 etl_exames.py 2 189.112.139.121 1157 localhost dicomvix system98 5423 clinux_santa_barbara system98 2 nao
+        python3 etl_exames.py 11 131.72.222.93 1157 10.233.95.19 dicomvix system98 5420 clinux_santa_maria system98 1 limpar
     """)
     t3 = BashOperator(
-        task_id='etl_pacientes_hsb',
+        task_id='etl_pacientes_hrsm',
         bash_command="""
         cd $AIRFLOW_HOME/dags/etl_scripts
-        python3 etl_pacientes.py 2 189.112.139.121 1157 localhost dicomvix system98 5423 clinux_santa_barbara system98 2 nao
+        python3 etl_pacientes.py 11 131.72.222.93 1157 10.233.95.19 dicomvix system98 5420 clinux_santa_maria system98 1 limpar
+
     """)
     
 # Definindo o padrão de execução, nesse caso executamos t1 e depois t2
