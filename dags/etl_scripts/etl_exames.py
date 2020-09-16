@@ -5,7 +5,7 @@ from pprint import pprint
 from sshtunnel import SSHTunnelForwarder
 
 param = sys.argv[1:]
-cd_empresa = param[0]
+cd_empresa = int(param[0])
 ip_server = param[1]
 port_server = int(param[2])
 ip_remote = param[3]
@@ -32,13 +32,7 @@ from exames ex
 select = """select ex.cd_atendimento,
                    ex.cd_exame,
                    fo.ds_fornecedor as ds_convenio,
-                   case pr.cd_modalidade
-                       when 6 then 4 -- ULTRASSONOGRAFIA
-                       when 7 then 5 -- ELETRONEUROMIOGRAFIA
-                       when 8 then 1 -- TOMOGRAFIA
-                       when 9 then 2 -- RESSONANCIA
-                       when 10 then 3 -- RAIO-X
-                   end as cd_modalidade,
+                   mo.ds_modalidade,
                    pr.ds_procedimento,
                    ms.ds_medico as ds_solicitante,
                    ms.ds_crm_nr || '-' || ms.ds_crm_uf as ds_crm_solicitante,
@@ -103,10 +97,10 @@ try:
             print("ETL EXAMES CLINUX")
             cursdw = conn2.cursor()
             if (clear == "limpar"):
-                cursdw.execute(delete, cd_empresa)
+                cursdw.execute(delete, [cd_empresa])
                 cursdw.close()
                 print("Tabela Limpa.")
-            cursclinux.execute(count,empresa)
+            cursclinux.execute(count,[empresa])
             offset = cursclinux.fetchone()
             offset = offset[0]
             pprint(offset)
@@ -126,8 +120,8 @@ try:
                         cursdw.mogrify("(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)", exame) for exame in
                         exames).decode()
                     cursdw.execute(
-                        "INSERT INTO exames (cd_atendimento, cd_exame,ds_convenio, cd_modalidade, ds_procedimento, ds_solicitante, ds_crm_solicitante, nr_vl_co, nr_vl_hm, nr_vl_mf, nr_vl_ct, nr_vl_md, nr_vl_particular, nr_vl_convenio,cd_empresa) VALUES " +
-                        args_str + "ON CONFLICT (cd_exame,cd_empresa) DO UPDATE SET ds_convenio=excluded.ds_convenio, cd_modalidade=excluded.cd_modalidade, ds_procedimento=excluded.ds_procedimento, ds_solicitante=excluded.ds_solicitante, ds_crm_solicitante=excluded.ds_crm_solicitante, nr_vl_convenio=excluded.nr_vl_convenio, nr_vl_particular=excluded.nr_vl_particular ")
+                        "INSERT INTO exames (cd_atendimento, cd_exame,ds_convenio, ds_modalidade, ds_procedimento, ds_solicitante, ds_crm_solicitante, nr_vl_co, nr_vl_hm, nr_vl_mf, nr_vl_ct, nr_vl_md, nr_vl_particular, nr_vl_convenio,cd_empresa) VALUES " +
+                        args_str + "ON CONFLICT (cd_exame,cd_empresa) DO UPDATE SET ds_convenio=excluded.ds_convenio, ds_modalidade=excluded.ds_modalidade, ds_procedimento=excluded.ds_procedimento, ds_solicitante=excluded.ds_solicitante, ds_crm_solicitante=excluded.ds_crm_solicitante, nr_vl_convenio=excluded.nr_vl_convenio, nr_vl_particular=excluded.nr_vl_particular ")
                     conn2.commit()
                     cursdw.close()
                 except Exception as e:

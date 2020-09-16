@@ -5,7 +5,7 @@ from pprint import pprint
 from sshtunnel import SSHTunnelForwarder
 
 param = sys.argv[1:]
-cd_empresa = param[0]
+cd_empresa = int(param[0])
 ip_server = param[1]
 port_server = int(param[2])
 ip_remote = param[3]
@@ -27,7 +27,7 @@ join medicos me using(cd_medico)
 left join medicos mr on (mr.cd_medico = ae.cd_revisor)
 join pacientes pa using(cd_paciente)
 left join atendimentos_avisos aa on (aa.cd_aviso = ae.nr_aviso)
-where ae.nr_controle is not null and em.cd_empresa = (%s)"""
+where em.cd_empresa = (%s)"""
 select = """select ae.cd_atendimento,
        ae.dt_data,
        	ae.dt_hora,
@@ -65,7 +65,7 @@ join medicos me using(cd_medico)
 left join medicos mr on (mr.cd_medico = ae.cd_revisor)
 join pacientes pa using(cd_paciente)
 left join atendimentos_avisos aa on (aa.cd_aviso = ae.nr_aviso)
-where ae.nr_controle is not null and em.cd_empresa = (%s) limit 500 offset (%s)"""
+where em.cd_empresa = (%s) limit 500 offset (%s)"""
 
 delete = "delete from atendimentos where cd_empresa = (%s)"
 
@@ -107,10 +107,13 @@ try:
             print("ETL EXAMES CLINUX")
             cursdw = conn2.cursor()
             if (clear == "limpar"):
-                cursdw.execute(delete, cd_empresa)
-                cursdw.close()
-                print("Tabela Limpa.")
-            cursclinux.execute(count, empresa)
+                try:
+                    cursdw.execute(delete, [cd_empresa])
+                    cursdw.close()
+                    print("Tabela Limpa.")
+                except Exception as e:
+                    print(e)
+            cursclinux.execute(count, [empresa])
             offset = cursclinux.fetchone()
             offset = offset[0]
             pprint(offset)

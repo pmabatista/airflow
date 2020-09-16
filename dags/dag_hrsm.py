@@ -24,19 +24,19 @@ with DAG(
         task_id='etl_atendimentos_hrsm',
         bash_command="""
         cd $AIRFLOW_HOME/dags/etl_scripts
-        python3 etl_atendimentos.py 11 131.72.222.93 1157 10.233.95.19 dicomvix system98 5420 clinux_santa_maria system98 1 limpar
+        python3 etl_atendimentos.py 11 131.72.222.93 1157 10.233.95.19 dicomvix system98 5429 clinux_santa_maria system98 1 limpar
     """)
     t2 = BashOperator(
         task_id='etl_exames_hrsm',
         bash_command="""
         cd $AIRFLOW_HOME/dags/etl_scripts
-        python3 etl_exames.py 11 131.72.222.93 1157 10.233.95.19 dicomvix system98 5420 clinux_santa_maria system98 1 limpar
+        python3 etl_exames.py 11 131.72.222.93 1157 10.233.95.19 dicomvix system98 5429 clinux_santa_maria system98 1 limpar
     """)
     t3 = BashOperator(
         task_id='etl_pacientes_hrsm',
         bash_command="""
         cd $AIRFLOW_HOME/dags/etl_scripts
-        python3 etl_pacientes.py 11 131.72.222.93 1157 10.233.95.19 dicomvix system98 5420 clinux_santa_maria system98 1 limpar
+        python3 etl_pacientes.py 11 131.72.222.93 1157 10.233.95.19 dicomvix system98 5429 clinux_santa_maria system98 1 limpar
 
     """)
     

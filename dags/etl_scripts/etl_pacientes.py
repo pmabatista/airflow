@@ -5,7 +5,7 @@ from pprint import pprint
 from sshtunnel import SSHTunnelForwarder
 
 param = sys.argv[1:]
-cd_empresa = param[0]
+cd_empresa = int(param[0])
 ip_server = param[1]
 port_server = int(param[2])
 ip_remote = param[3]
@@ -87,10 +87,10 @@ try:
             print("ETL EXAMES CLINUX")
             cursdw = conn2.cursor()
             if (clear == "limpar"):
-                cursdw.execute(delete, cd_empresa)
+                cursdw.execute(delete, [cd_empresa])
                 cursdw.close()
                 print("Tabela Limpa.")
-            cursclinux.execute(count,empresa)
+            cursclinux.execute(count,[empresa])
             offset = cursclinux.fetchone()
             offset = offset[0]
             pprint(offset)
