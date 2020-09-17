@@ -36,8 +36,14 @@ select = """select ae.cd_atendimento,
 	(%s)::integer AS cd_empresa,
 	me.ds_medico as ds_executante,
 	aa.ds_aviso,
-       ae.dt_hora_sala01                           as hr_entrada_sala,
-       ae.dt_hora_sala02                           as hr_saida_sala,
+	(ae.dt_hora_entrada)                                   AS entrada,
+    (ae.dt_hora_senha)                                     AS senha,
+    (ae.dt_hora_ficha)                                     AS ficha,
+    (ae.dt_hora_sala00)                                    AS entrada_preparo,
+    (ae.dt_hora_sala10)                                    AS saida_preparo,
+    (ae.dt_hora_sala01)                                    AS entrada_exame,
+    (ae.dt_hora_sala02)                                    AS saida_exame,
+    (ae.dt_hora_saida)                                     AS saida,
 CASE
 WHEN ae.ds_status = 1 THEN 'CANCELADO'
 WHEN ae.ds_status = 2 THEN 'MARCADO'
@@ -130,10 +136,10 @@ try:
                 try:
                     cursdw = conn2.cursor()
                     args_str = b','.join(
-                        cursdw.mogrify("(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)", atendimento) for atendimento in
+                        cursdw.mogrify("(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)", atendimento) for atendimento in
                         atendimentos).decode()
                     cursdw.execute(
-                        "INSERT INTO atendimentos (cd_atendimento,dt_data,dt_hora,nr_controle,dt_agendamento,cd_empresa,ds_executante,ds_aviso,hr_entrada_sala,hr_saida_sala,ds_status,cd_paciente) VALUES " +
+                        "INSERT INTO atendimentos (cd_atendimento,dt_data,dt_hora,nr_controle,dt_agendamento,cd_empresa,ds_executante,ds_aviso,entrada, senha, ficha,entrada_preparo, saida_preparo, entrada_exame,saida_exame,saida,ds_status,cd_paciente) VALUES " +
                         args_str + "ON CONFLICT (cd_atendimento,cd_empresa) DO UPDATE set cd_paciente = excluded.cd_paciente")
                     conn2.commit()
                     cursdw.close()
