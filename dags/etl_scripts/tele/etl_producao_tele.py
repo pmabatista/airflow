@@ -42,7 +42,23 @@ select = """SELECT em.ds_empresa                       AS empresa,
                    LIMIT 1), ex.dt_assinado)           AS dt_primeira_assinatura,
                    ex.dt_assinado                      AS dt_hora_assinado,
                    split_part(ac.ds_complemento, '- ', 2) as ds_complemento,
-                   ah.ds_achado                        AS ds_achado
+                   ah.ds_achado                        AS ds_achado,
+                   CASE em.cd_empresa
+                              when 4 then 1
+                              when 11 then 18
+                              when 26 then 10
+                              when 69 then 5
+                              when 67 then 6
+                              when 56 then 4
+                              when 66 then 9
+                              when 62 then 20
+                              when 51 then 2
+                              when 40 then 11
+                              when 9 then 19
+                              when 60 then 8
+                              when 53 then 3
+                  else null end                      as cd_empresa,
+                  ae.cd_auditor
 FROM (((((((((atendimentos ae
 JOIN pacientes pa USING (cd_paciente))
 JOIN salas sa USING (cd_sala))
@@ -59,7 +75,7 @@ WHERE ((ae.dt_data >= '2019-01-01'::date) AND (ae.dt_data <= '2022-12-31'::date)
 (ae.nr_controle IS NOT NULL) AND (ex.cd_procedimento IS NOT NULL))
 GROUP BY em.ds_empresa, ae.dt_data, pa.ds_paciente, ae.nr_controle, av.ds_aviso, 
 mo.ds_modalidade, pr.ds_procedimento,me.ds_medico, me.ds_crm_nr, me.ds_crm_uf, (ae.dt_data + ae.dt_hora), 
-la.dt_assinado, ex.cd_exame,ae.cd_atendimento,ac.ds_complemento, ah.ds_achado limit 50000 offset (%s)"""
+la.dt_assinado, ex.cd_exame,ae.cd_atendimento,ac.ds_complemento, ah.ds_achado,em.cd_empresa,ae.cd_auditor limit 50000 offset (%s)"""
 
 
 try:
@@ -115,9 +131,9 @@ try:
                 curstele.close()
                 try:
                     cursdw = conn2.cursor()
-                    args_str = b','.join(cursdw.mogrify("(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)", atendimento) for atendimento in producao).decode()
-                    cursdw.execute("INSERT INTO teleradiologia (empresa, data, paciente, protocolo, aviso, modalidade, procedimento, medico_executante, cd_exame, crm_medico_executante, crm_uf_med_executante, dthora_pedido_cliente, dthora_integracao_tele, dt_primeira_assinatura, dt_hora_assinado,ds_complemento,ds_achado) VALUES " +
-                                   args_str + "ON CONFLICT (cd_exame) DO UPDATE SET empresa = excluded.empresa, data = excluded.data, paciente = excluded.paciente, protocolo = excluded.protocolo, aviso = excluded.aviso, modalidade = excluded.modalidade, procedimento = excluded.procedimento, medico_executante = excluded.medico_executante, crm_medico_executante = excluded.crm_medico_executante, crm_uf_med_executante = excluded.crm_uf_med_executante, dthora_pedido_cliente = excluded.dthora_pedido_cliente, dthora_integracao_tele = excluded.dthora_integracao_tele, dt_primeira_assinatura = excluded.dt_primeira_assinatura, dt_hora_assinado = excluded.dt_hora_assinado, ds_complemento = excluded.ds_complemento, ds_achado = excluded.ds_achado")
+                    args_str = b','.join(cursdw.mogrify("(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,s%)", atendimento) for atendimento in producao).decode()
+                    cursdw.execute("INSERT INTO teleradiologia (empresa, data, paciente, protocolo, aviso, modalidade, procedimento, medico_executante, cd_exame, crm_medico_executante, crm_uf_med_executante, dthora_pedido_cliente, dthora_integracao_tele, dt_primeira_assinatura, dt_hora_assinado,ds_complemento,ds_achado,cd_empresa,cd_auditor) VALUES " +
+                                   args_str + "ON CONFLICT (cd_exame) DO UPDATE SET empresa = excluded.empresa, data = excluded.data, paciente = excluded.paciente, protocolo = excluded.protocolo, aviso = excluded.aviso, modalidade = excluded.modalidade, procedimento = excluded.procedimento, medico_executante = excluded.medico_executante, crm_medico_executante = excluded.crm_medico_executante, crm_uf_med_executante = excluded.crm_uf_med_executante, dthora_pedido_cliente = excluded.dthora_pedido_cliente, dthora_integracao_tele = excluded.dthora_integracao_tele, dt_primeira_assinatura = excluded.dt_primeira_assinatura, dt_hora_assinado = excluded.dt_hora_assinado, ds_complemento = excluded.ds_complemento, ds_achado = excluded.ds_achado, cd_auditor = excluded.cd_auditor")
                     conn2.commit()
                     cursdw.close()
                 except Exception as e:

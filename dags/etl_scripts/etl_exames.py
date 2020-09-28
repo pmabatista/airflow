@@ -28,6 +28,8 @@ from exames ex
          left join medicos ms on (ms.cd_medico = ex.cd_medico)
          join planos pl using (cd_plano)
          join fornecedores fo on pl.cd_fornecedor = fo.cd_fornecedor 
+         left join estoques_controle ec using (cd_exame)
+         left join materiais ma on (ec.cd_material = ma.cd_material)
          where em.cd_empresa = (%s)"""
 select = """select ex.cd_atendimento,
                    ex.cd_exame,
@@ -43,7 +45,9 @@ select = """select ex.cd_atendimento,
                    ex.nr_vl_md,
                    ex.nr_vl_particular,
                    ex.nr_vl_convenio,
-                   (%s)::integer AS cd_empresa
+                   (%s)::integer AS cd_empresa,
+                   ma.ds_material,
+                   ec.ds_lote
              from exames ex
                 join atendimentos ae using(cd_atendimento)
                 join salas sa using(cd_sala)
@@ -53,6 +57,8 @@ select = """select ex.cd_atendimento,
                 left join medicos ms on (ms.cd_medico = ex.cd_medico)
                 join planos pl using (cd_plano)
                 join fornecedores fo on pl.cd_fornecedor = fo.cd_fornecedor
+                left join estoques_controle ec using (cd_exame)
+                left join materiais ma on (ec.cd_material = ma.cd_material)
                 where em.cd_empresa = (%s)
                 limit 500 
                 offset (%s)"""
@@ -117,10 +123,10 @@ try:
                 try:
                     cursdw = conn2.cursor()
                     args_str = b','.join(
-                        cursdw.mogrify("(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)", exame) for exame in
+                        cursdw.mogrify("(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)", exame) for exame in
                         exames).decode()
                     cursdw.execute(
-                        "INSERT INTO exames (cd_atendimento, cd_exame,ds_convenio, ds_modalidade, ds_procedimento, ds_solicitante, ds_crm_solicitante, nr_vl_co, nr_vl_hm, nr_vl_mf, nr_vl_ct, nr_vl_md, nr_vl_particular, nr_vl_convenio,cd_empresa) VALUES " +
+                        "INSERT INTO exames (cd_atendimento, cd_exame,ds_convenio, ds_modalidade, ds_procedimento, ds_solicitante, ds_crm_solicitante, nr_vl_co, nr_vl_hm, nr_vl_mf, nr_vl_ct, nr_vl_md, nr_vl_particular, nr_vl_convenio,cd_empresa,ds_material,ds_lote) VALUES " +
                         args_str + "ON CONFLICT (cd_exame,cd_empresa) DO UPDATE SET ds_convenio=excluded.ds_convenio, ds_modalidade=excluded.ds_modalidade, ds_procedimento=excluded.ds_procedimento, ds_solicitante=excluded.ds_solicitante, ds_crm_solicitante=excluded.ds_crm_solicitante, nr_vl_convenio=excluded.nr_vl_convenio, nr_vl_particular=excluded.nr_vl_particular ")
                     conn2.commit()
                     cursdw.close()
