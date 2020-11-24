@@ -127,7 +127,7 @@ try:
                         exames).decode()
                     cursdw.execute(
                         "INSERT INTO exames (cd_atendimento, cd_exame,ds_convenio, ds_modalidade, ds_procedimento, ds_solicitante, ds_crm_solicitante, nr_vl_co, nr_vl_hm, nr_vl_mf, nr_vl_ct, nr_vl_md, nr_vl_particular, nr_vl_convenio,cd_empresa,ds_material,ds_lote) VALUES " +
-                        args_str + "ON CONFLICT (cd_exame,cd_empresa) DO UPDATE SET ds_convenio=excluded.ds_convenio, ds_modalidade=excluded.ds_modalidade, ds_procedimento=excluded.ds_procedimento, ds_solicitante=excluded.ds_solicitante, ds_crm_solicitante=excluded.ds_crm_solicitante, nr_vl_convenio=excluded.nr_vl_convenio, nr_vl_particular=excluded.nr_vl_particular ")
+                        args_str + "ON CONFLICT (cd_exame,cd_empresa) DO NOTHING")
                     conn2.commit()
                     cursdw.close()
                 except Exception as e:

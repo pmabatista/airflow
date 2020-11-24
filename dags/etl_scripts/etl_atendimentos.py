@@ -27,6 +27,7 @@ join medicos me using(cd_medico)
 left join medicos mr on (mr.cd_medico = ae.cd_revisor)
 join pacientes pa using(cd_paciente)
 left join atendimentos_avisos aa on (aa.cd_aviso = ae.nr_aviso)
+left join atendimentos_localizacao al using (cd_localizacao)
 where em.cd_empresa = (%s)"""
 select = """select ae.cd_atendimento,
        ae.dt_data,
@@ -63,7 +64,8 @@ WHEN ae.ds_status = 15 THEN 'ASSINATURA LAUDO'
 WHEN ae.ds_status = 16 THEN 'ASSINATURA PROVISORIA'
 WHEN ae.ds_status = 17 THEN 'IMPRESSAO PROTOCOLO'
 END as ds_status,
-ae.cd_paciente
+ae.cd_paciente,
+al.ds_localizacao
 from atendimentos ae
 join salas sa using(cd_sala)
 join empresas em using (cd_empresa)
@@ -71,6 +73,7 @@ join medicos me using(cd_medico)
 left join medicos mr on (mr.cd_medico = ae.cd_revisor)
 join pacientes pa using(cd_paciente)
 left join atendimentos_avisos aa on (aa.cd_aviso = ae.nr_aviso)
+left join atendimentos_localizacao al using (cd_localizacao)
 where em.cd_empresa = (%s) limit 500 offset (%s)"""
 
 delete = "delete from atendimentos where cd_empresa = (%s)"
@@ -110,7 +113,7 @@ try:
             cursclinux = conn.cursor()
             conn2 = psycopg2.connect(**dw)
             print("database connected clinux")
-            print("ETL EXAMES CLINUX")
+            print("ETL ATENDIMENTOS CLINUX")
             cursdw = conn2.cursor()
             if (clear == "limpar"):
                 try:
@@ -136,10 +139,10 @@ try:
                 try:
                     cursdw = conn2.cursor()
                     args_str = b','.join(
-                        cursdw.mogrify("(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)", atendimento) for atendimento in
+                        cursdw.mogrify("(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)", atendimento) for atendimento in
                         atendimentos).decode()
                     cursdw.execute(
-                        "INSERT INTO atendimentos (cd_atendimento,dt_data,dt_hora,nr_controle,dt_agendamento,cd_empresa,ds_executante,ds_aviso,entrada, senha, ficha,entrada_preparo, saida_preparo, entrada_exame,saida_exame,saida,ds_status,cd_paciente) VALUES " +
+                        "INSERT INTO atendimentos (cd_atendimento,dt_data,dt_hora,nr_controle,dt_agendamento,cd_empresa,ds_executante,ds_aviso,entrada, senha, ficha,entrada_preparo, saida_preparo, entrada_exame,saida_exame,saida,ds_status,cd_paciente,ds_localizacao) VALUES " +
                         args_str + "ON CONFLICT (cd_atendimento,cd_empresa) DO UPDATE set cd_paciente = excluded.cd_paciente")
                     conn2.commit()
                     cursdw.close()
