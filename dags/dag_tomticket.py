@@ -6,7 +6,7 @@ from airflow.operators.bash_operator import BashOperator
 default_args = {
     'owner': 'miguel_pedro',
     'depends_on_past': False,
-    'start_date': datetime(2020, 6, 29),
+    'start_date': datetime(2020, 11, 24),
     'retries': 1,
     'email': ['inteligencia@crd.med.br'],
     'email_on_failure': True,
@@ -14,31 +14,18 @@ default_args = {
 }
 # Nomeando a DAG e definindo quando ela vai ser executada (você pode usar argumentos em Crontab também caso queira que a DAG execute por exemplo todos os dias as 8 da manhã)
 with DAG(
-    'dag_hmap',
+    'dag_tomticket',
     catchup=False,
-    schedule_interval= '0 4,16 * * *',
+    schedule_interval= '5 4,16 * * *',
     default_args=default_args
 ) as dag:
     # Definindo as tarefas que a DAG vai executar, nesse caso a execução de dois programas Python, chamando sua execução por comandos bash
     t1 = BashOperator(
-        task_id='etl_atendimentos_hmap',
+        task_id='etl_tomticket',
         bash_command="""
         cd $AIRFLOW_HOME/dags/etl_scripts
-        python3 etl_atendimentos.py 3 54.233.117.112 22 dicomvix Gtecbsb@2019 5424 clinux_hmap
-    """)
-    t2 = BashOperator(
-        task_id='etl_exames_hmap',
-        bash_command="""
-        cd $AIRFLOW_HOME/dags/etl_scripts/hmap/
-        python3 etl_exames_hmap.py 
-        
-    """)
-    t3 = BashOperator(
-        task_id='etl_pacientes_hmap',
-        bash_command="""
-        cd $AIRFLOW_HOME/dags/etl_scripts/hmap/
-        python3 etl_pacientes_hmap.py
+        python3 etl_tomticket.py
     """)
     
-# Definindo o padrão de execução, nesse caso executamos t1 e depois t2
-t1 >> t2 >> t3
+# Definindo o padrão de execução
+t1 
