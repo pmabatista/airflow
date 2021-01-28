@@ -26,7 +26,10 @@ select = """SELECT em.ds_empresa                       AS empresa,
                    mo.ds_modalidade                    AS modalidade,
                    pr.ds_procedimento                  AS procedimento,
                    me.ds_medico                        AS medico_executante,
+                   mr.ds_medico                        AS medico_revisor,
                    ex.cd_exame,
+                   mr.ds_crm_nr                        AS crm_medico_revisor,
+                   mr.ds_crm_uf                        AS crm_uf_med_revisor,
                    me.ds_crm_nr                        AS crm_medico_executante,
                    me.ds_crm_uf                        AS crm_uf_med_executante,
                    (ae.dt_data + ae.dt_hora)           AS dthora_pedido_cliente,
@@ -65,7 +68,7 @@ select = """SELECT em.ds_empresa                       AS empresa,
                              when 3 then 'Erro Conceitual Parcial'
                              when 4 then 'Erro Conceitual Completo'
                   else null end                      as ds_auditoria
-FROM (((((((((atendimentos ae
+FROM ((((((((((atendimentos ae
 JOIN pacientes pa USING (cd_paciente))
 JOIN salas sa USING (cd_sala))
 JOIN empresas em USING (cd_empresa))
@@ -73,14 +76,15 @@ LEFT JOIN exames ex USING (cd_atendimento))
 LEFT JOIN procedimentos pr ON ((ex.cd_procedimento = pr.cd_procedimento)))
 LEFT JOIN modalidades mo ON ((pr.cd_modalidade = mo.cd_modalidade)))
 LEFT JOIN atendimentos_avisos av ON ((ae.nr_aviso = av.cd_aviso)))
-LEFT JOIN medicos me ON ((me.cd_medico = ae.cd_medico)))     
+LEFT JOIN medicos me ON ((me.cd_medico = ae.cd_medico)))
+LEFT JOIN medicos mr ON ((mr.cd_medico = ae.cd_revisor)))
 LEFT JOIN laudos_assinados la ON ((la.cd_laudo = ex.cd_exame))
 LEFT JOIN atendimentos_complementos ac ON (ae.cd_complemento=ac.cd_complemento)
 LEFT JOIN laudos_achados_tipos ah using (cd_achado))
 WHERE ((ae.dt_data >= '2019-01-01'::date) AND (ae.dt_data <= '2022-12-31'::date) AND (me.sn_clinico = true) AND
 (ae.nr_controle IS NOT NULL) AND (ex.cd_procedimento IS NOT NULL))
 GROUP BY em.ds_empresa, ae.dt_data, pa.ds_paciente, ae.nr_controle, av.ds_aviso, 
-mo.ds_modalidade, pr.ds_procedimento,me.ds_medico, me.ds_crm_nr, me.ds_crm_uf, (ae.dt_data + ae.dt_hora), 
+mo.ds_modalidade, pr.ds_procedimento,me.ds_medico, me.ds_crm_nr, me.ds_crm_uf, (ae.dt_data + ae.dt_hora), mr.ds_medico,  mr.ds_crm_nr, mr.ds_crm_uf,
 la.dt_assinado, ex.cd_exame,ae.cd_atendimento,ac.ds_complemento, ah.ds_achado,em.cd_empresa,ae.cd_auditor,ae.nr_score limit 50000 offset (%s)"""
 
 
@@ -137,9 +141,9 @@ try:
                 curstele.close()
                 try:
                     cursdw = conn2.cursor()
-                    args_str = b','.join(cursdw.mogrify("(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)", atendimento) for atendimento in producao).decode()
-                    cursdw.execute("INSERT INTO teleradiologia (empresa, data, paciente, protocolo, aviso, modalidade, procedimento, medico_executante, cd_exame, crm_medico_executante, crm_uf_med_executante, dthora_pedido_cliente, dthora_integracao_tele, dt_primeira_assinatura, dt_hora_assinado,ds_complemento,ds_achado,cd_empresa,cd_auditor, ds_auditoria) VALUES " +
-                                   args_str + "ON CONFLICT (cd_exame) DO UPDATE SET empresa = excluded.empresa, data = excluded.data, paciente = excluded.paciente, protocolo = excluded.protocolo, aviso = excluded.aviso, modalidade = excluded.modalidade, procedimento = excluded.procedimento, medico_executante = excluded.medico_executante, crm_medico_executante = excluded.crm_medico_executante, crm_uf_med_executante = excluded.crm_uf_med_executante, dthora_pedido_cliente = excluded.dthora_pedido_cliente, dthora_integracao_tele = excluded.dthora_integracao_tele, dt_primeira_assinatura = excluded.dt_primeira_assinatura, dt_hora_assinado = excluded.dt_hora_assinado, ds_complemento = excluded.ds_complemento, ds_achado = excluded.ds_achado, cd_auditor = excluded.cd_auditor, ds_auditoria = excluded.ds_auditoria")
+                    args_str = b','.join(cursdw.mogrify("(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)", atendimento) for atendimento in producao).decode()
+                    cursdw.execute("INSERT INTO teleradiologia (empresa, data, paciente, protocolo, aviso, modalidade, procedimento, medico_executante, medico_revisor, cd_exame,crm_medico_revisor, crm_uf_med_revisor, crm_medico_executante, crm_uf_med_executante, dthora_pedido_cliente, dthora_integracao_tele, dt_primeira_assinatura, dt_hora_assinado,ds_complemento,ds_achado,cd_empresa,cd_auditor, ds_auditoria) VALUES " +
+                                   args_str + "ON CONFLICT (cd_exame) DO UPDATE SET empresa = excluded.empresa, data = excluded.data, paciente = excluded.paciente, protocolo = excluded.protocolo, aviso = excluded.aviso, modalidade = excluded.modalidade, procedimento = excluded.procedimento, medico_executante = excluded.medico_executante, crm_medico_executante = excluded.crm_medico_executante, crm_uf_med_executante = excluded.crm_uf_med_executante, dthora_pedido_cliente = excluded.dthora_pedido_cliente, dthora_integracao_tele = excluded.dthora_integracao_tele, dt_primeira_assinatura = excluded.dt_primeira_assinatura, dt_hora_assinado = excluded.dt_hora_assinado, ds_complemento = excluded.ds_complemento, ds_achado = excluded.ds_achado, cd_auditor = excluded.cd_auditor, ds_auditoria = excluded.ds_auditoria, medico_revisor = excluded.medico_revisor, crm_medico_revisor = excluded.crm_medico_revisor, crm_uf_med_revisor = excluded.crm_uf_med_revisor ")
                     conn2.commit()
                     cursdw.close()
                 except Exception as e:
